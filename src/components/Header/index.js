@@ -15,6 +15,7 @@ export default function Header() {
           alt="Foto do usuário"
         />
       </div>
+
       <Link to="/dashboard">
         <FiHome color="#fff" size={24} />
         Chamados
