@@ -19,6 +19,7 @@ export default function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  // para manter os dados do user
   useEffect(() => {
     async function loadUser() {
       const storageUser = localStorage.getItem('@ticketsPRO');
