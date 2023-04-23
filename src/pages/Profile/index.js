@@ -5,6 +5,10 @@ import Title from '../../components/Title';
 import { FiSettings, FiUpload } from 'react-icons/fi';
 import avatar from '../../assets/avatar.png';
 import { AuthContext } from '../../context/auth';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db, storage } from '../../services/firebaseConnection';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { Toast, toast } from 'react-toastify';
 
 export default function Profile() {
   const { user, setUser, storageUser, logout } = useContext(AuthContext);
@@ -28,6 +32,56 @@ export default function Profile() {
     }
   }
 
+  async function handleUpload() {
+    const currentUid = user.uid;
+
+    const uploadRef = ref(storage, `images/${currentUid}/${imageAvatar.name}`);
+    const uploadTask = uploadBytes(uploadRef, imageAvatar).then(snapshot => {
+      getDownloadURL(snapshot.ref).then(async downLoadURL => {
+        let urlFoto = downLoadURL;
+        // atualizar no banco
+        const docRef = doc(db, 'users', user.uid);
+        await updateDoc(docRef, {
+          avatarUrl: urlFoto,
+          nome: nome
+        }).then(() => {
+          let data = {
+            ...user,
+            nome: nome,
+            avatarUrl: urlFoto
+          };
+          setUser(data);
+          storageUser(data);
+          toast.success('Atualizado com sucesso');
+        });
+      });
+    });
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (imageAvatar === null && nome !== '') {
+      //atualizar apenas o nome
+      const docRef = doc(db, 'users', user.uid);
+      await updateDoc(docRef, {
+        nome: nome
+      })
+        .then(() => {
+          let data = {
+            ...user,
+            nome: nome
+          };
+          setUser(data);
+          storageUser(data);
+          toast.success('Atualizado com sucesso');
+        })
+        .catch(() => {});
+    } else if (nome !== '' && imageAvatar !== null) {
+      //atualizar nome e foto
+      handleUpload();
+    }
+  }
+
   return (
     <div>
       <Header />
@@ -36,7 +90,7 @@ export default function Profile() {
           <FiSettings size={25} />
         </Title>
         <div className="container">
-          <form className="form-profile">
+          <form className="form-profile" onSubmit={handleSubmit}>
             <label className="label-avatar">
               <span>
                 <FiUpload color="#FFF" size={25} />
