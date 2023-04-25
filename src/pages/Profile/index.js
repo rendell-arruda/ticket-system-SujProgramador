@@ -89,6 +89,7 @@ export default function Profile() {
         <Title name="Minha conta">
           <FiSettings size={25} />
         </Title>
+
         <div className="container">
           <form className="form-profile" onSubmit={handleSubmit}>
             <label className="label-avatar">
