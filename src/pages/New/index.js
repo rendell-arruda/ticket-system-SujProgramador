@@ -11,18 +11,25 @@ const listRef = collection(db, 'customers');
 export default function New() {
   const { user } = useContext(AuthContext);
 
+  //lista de clientes que virá do firebase
   const [customers, setCustomers] = useState([]);
+
   const [complemento, setComplemento] = useState('');
   const [assunto, setAssunto] = useState('Suporte');
   const [status, setStatus] = useState('Aberto');
+
+  //carregando os clientes
   const [loadCustomers, setLoadCustomers] = useState(true);
+  //cliente selecionado
   const [customerSelected, setCustomerSelected] = useState(0);
 
+  //carregando os clientes ao abrir a pagina
   useEffect(() => {
     async function loadCustomers() {
       const querySnapshot = await getDocs(listRef)
         .then(snapshot => {
           let lista = [];
+          //percorrendo a lista de clientes que veio pelo snapshot
           snapshot.forEach(doc => {
             lista.push({
               id: doc.id,
@@ -47,13 +54,13 @@ export default function New() {
     loadCustomers();
   }, []);
 
+  // atualiza a usestate do status do chamado
   function handleOptionChange(e) {
     setStatus(e.target.value);
   }
-
+  //atualiza o assunto do chamado
   function handleChangeSelect(e) {
     setAssunto(e.target.value);
-    console.log(e.target.value);
   }
 
   function handleChangeCustomer(e) {
@@ -71,6 +78,7 @@ export default function New() {
         <div className="container">
           <form className="form-profile">
             <label>Clientes</label>
+            {/* se estiver carregando os clientes, aparece a mensagem */}
             {loadCustomers ? (
               <input
                 type="text"
@@ -78,8 +86,8 @@ export default function New() {
                 value="Carregando clientes..."
               />
             ) : (
+              //se não estiver carregando os clientes, aparece o select
               <select value={customerSelected} onChange={handleChangeCustomer}>
-                {' '}
                 {customers.map((item, index) => {
                   return (
                     <option key={index} value={index}>
@@ -89,14 +97,12 @@ export default function New() {
                 })}
               </select>
             )}
-
             <label>Assunto</label>
             <select value={assunto} onChange={handleChangeSelect}>
               <option value="suporte">Suporte</option>
               <option value="visita tecnica">Visita Técnica</option>
               <option value="financeiro">Financeiro</option>
             </select>
-
             <label>Status</label>
             <div className="status">
               <input
@@ -104,6 +110,7 @@ export default function New() {
                 name="radio"
                 value="Aberto"
                 onChange={handleOptionChange}
+                // a bolinha estar marcada com o status
                 checked={status === 'Aberto'}
               />
               <span>Em Aberto</span>
@@ -112,6 +119,7 @@ export default function New() {
                 name="radio"
                 value="Progresso"
                 onChange={handleOptionChange}
+                // a bolinha estar marcada com o status
                 checked={status === 'Progresso'}
               />
               <span>Progresso</span>
@@ -120,6 +128,7 @@ export default function New() {
                 name="radio"
                 value="Atendido"
                 onChange={handleOptionChange}
+                // a bolinha estar marcada com o status
                 checked={status === 'Atendido'}
               />
               <span>Atendido</span>
