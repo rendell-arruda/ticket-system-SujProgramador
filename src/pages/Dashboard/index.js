@@ -24,7 +24,11 @@ export default function Dashboard() {
   //lista de chamados vindo do firebase
   const [chamados, setChamados] = useState([]);
   const [loading, setLoading] = useState(true);
+
   const [isEmpty, setIsEmpty] = useState(false);
+  const [lastDocs, setLastDocs] = useState([]);
+  // enquanto busca mais items
+  const [loadingMore, setloadingMore] = useState(false);
 
   useEffect(() => {
     //carregar chamados
@@ -33,6 +37,7 @@ export default function Dashboard() {
       const querySnapshot = await getDocs(q);
       setChamados([]);
 
+      //pegar os dados do ultimo documento
       await updateStates(querySnapshot);
       setLoading(false);
     }
@@ -46,6 +51,8 @@ export default function Dashboard() {
     const isCollectionEmpty = querySnapshot.size === 0; //se estiver vazio recebe true
     if (!isCollectionEmpty) {
       let lista = [];
+
+      //pegar os dados do ultimo documento
       querySnapshot.forEach(doc => {
         lista.push({
           id: doc.id,
@@ -58,10 +65,30 @@ export default function Dashboard() {
           complemento: doc.data().complemento
         });
       });
+      //pegar o ultimo renderizado
+      const lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
+      // a state recebe o ultimo documento renderizado
+      setLastDocs(lastDoc);
+      //coloca os dados no estado chamados
       setChamados(chamados => [...chamados, ...lista]);
     } else {
       setIsEmpty(true);
     }
+    setloadingMore(false);
+  }
+
+  //buscar mais itens a partir do ultimo documento renderizado
+  async function handleMore() {
+    setloadingMore(true);
+    const q = query(
+      listRef,
+      orderBy('created', 'desc'),
+      startAfter(lastDocs),
+      limit(5)
+    );
+    const querySnapshot = await getDocs(q);
+    //buscar os itens e mostrar na tela
+    await updateStates(querySnapshot);
   }
 
   if (loading) {
@@ -73,7 +100,6 @@ export default function Dashboard() {
             <FiMessageSquare size={25} />
           </Title>
           <div className="container dashboard">
-            {' '}
             <span>Buscando chamados...</span>
           </div>
         </div>
@@ -121,7 +147,10 @@ export default function Dashboard() {
                         <td data-label="Status">
                           <span
                             className="badge"
-                            style={{ backgroundColor: '#999' }}
+                            style={{
+                              backgroundColor:
+                                item.status === 'Aberto' ? '#5cb85c' : '#999'
+                            }}
                           >
                             {item.status}
                           </span>
@@ -146,6 +175,13 @@ export default function Dashboard() {
                   })}
                 </tbody>
               </table>
+              {/* //se não estiver vazio e não estiver carregando mais */}
+              {loadingMore && <h3>Buscando itens...</h3>}
+              {!loadingMore && !isEmpty && (
+                <button className="btn-more" onClick={handleMore}>
+                  Buscar mais
+                </button>
+              )}
             </>
           )}
         </>
