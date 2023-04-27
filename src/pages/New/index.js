@@ -7,10 +7,13 @@ import { AuthContext } from '../../context/auth';
 import { db } from '../../services/firebaseConnection';
 import { collection, getDocs, getDoc, doc, addDoc } from 'firebase/firestore';
 import { toast } from 'react-toastify';
+import { useParams } from 'react-router-dom';
+
 const listRef = collection(db, 'customers');
 
 export default function New() {
   const { user } = useContext(AuthContext);
+  const { id } = useParams();
 
   //lista de clientes que virá do firebase
   const [customers, setCustomers] = useState([]);
@@ -23,6 +26,9 @@ export default function New() {
   const [loadCustomers, setLoadCustomers] = useState(true);
   //cliente selecionado
   const [customerSelected, setCustomerSelected] = useState(0);
+
+  //quando adicionar ou quando atualizar
+  const [idCustomer, setIdCustomer] = useState(false);
 
   //carregando os clientes ao abrir a pagina
   useEffect(() => {
@@ -45,6 +51,10 @@ export default function New() {
           }
           setCustomers(lista);
           setLoadCustomers(false);
+
+          if (id) {
+            loadId(lista);
+          }
         })
         .catch(error => {
           console.log('Erro ao buscar os clientes ', error);
@@ -53,7 +63,28 @@ export default function New() {
         });
     }
     loadCustomers();
-  }, []);
+  }, [id]);
+
+  async function loadId(lista) {
+    const docRef = doc(db, 'chamados', id);
+    await getDoc(docRef)
+      .then(snapshot => {
+        setAssunto(snapshot.data().assunto);
+        setStatus(snapshot.data().status);
+        setComplemento(snapshot.data().complemento);
+
+        let index = lista.findIndex(
+          item => item.id === snapshot.data().clienteId
+        );
+
+        setCustomerSelected(index);
+        setIdCustomer(true);
+      })
+      .catch(error => {
+        console.log(error);
+        setIdCustomer(false);
+      });
+  }
 
   // atualiza a usestate do status do chamado
   function handleOptionChange(e) {
@@ -70,6 +101,10 @@ export default function New() {
 
   async function handleRegister(e) {
     e.preventDefault();
+    if (idCustomer) {
+      alert('tem id, editando chamado');
+      return;
+    }
     //registrar um chamado
     await addDoc(collection(db, 'chamados'), {
       created: new Date(),
